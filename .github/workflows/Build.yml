@@ -1,0 +1,31 @@
+name: Build Pipeline
+run-name: '${{ github.actor }} initiated build pipeline'
+'on':
+  pull_request: null
+  workflow_dispatch: null
+  workflow_call: null
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+jobs:
+  Build-Pipeline:
+    name: Build
+    runs-on:
+      - self-hosted
+      - Linux
+      - usdev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Build
+        shell: bash
+        run: |
+          export JAVA_HOME='/usr/gat/jdk-20.0.2'
+          export _JAVA_OPTIONS="-Xms2g -Xmx5g"
+          /usr/gat/apache-maven-3.9.4/bin/mvn clean install
+      - name: Validate YAML/XML
+        if: always()
+        shell: bash
+        run: >
+          /usr/gat/jdk-20.0.2/bin/java -cp
+          "./mcd-core/target/classes/:/root/.m2/repository/org/yaml/snakeyaml/2.0/snakeyaml-2.0.jar:/root/.m2/repository/org/testng/testng/7.8.0/testng-7.8.0.jar:/root/.m2/repository/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar"
+          mcd.core.fileutils.YamlAndXmlValidator
